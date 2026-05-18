@@ -1,1 +1,2295 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול תכשיטים</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #9B7B2E;
+    --bg: #0F0F0F;
+    --bg2: #1A1A1A;
+    --bg3: #242424;
+    --border: #2E2E2E;
+    --text: #F0EDE8;
+    --text2: #A09890;
+    --green: #4CAF7A;
+    --red: #CF6679;
+    --blue: #5B9BD5;
+    --orange: #D4945A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .logo-icon { font-size: 22px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg3);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--gold);
+    color: #0F0F0F;
+    font-weight: 700;
+  }
+
+  /* ── Main ── */
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--gold); }
+  .search-box::placeholder { color: var(--text2); }
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--gold); color: #0F0F0F; }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── Cards Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--gold-dark); transform: translateY(-1px); }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card-id {
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card-subtitle { font-size: 13px; color: var(--text2); }
+  .card-body { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .card-label { color: var(--text2); }
+  .card-value { font-weight: 500; }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-received  { background: #1A3A2A; color: var(--green); }
+  .badge-inprogress { background: #2A2A1A; color: var(--orange); }
+  .badge-ready     { background: #1A2A3A; color: var(--blue); }
+  .badge-done      { background: #2A1A1A; color: var(--red); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px;
+    position: relative;
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--bg3);
+    border: none;
+    color: var(--text2);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Form ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; color: var(--text2); font-weight: 500; }
+  input, select, textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    direction: rtl;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 70px; }
+  select option { background: var(--bg3); }
+  .section-divider {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-top: 8px;
+  }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+    margin-top: 24px;
+    grid-column: 1 / -1;
+  }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text2);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bg3);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-size: 15px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Setup screen ── */
+  .setup-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .setup-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  .setup-icon { font-size: 48px; margin-bottom: 16px; }
+  .setup-card h2 { color: var(--gold); margin-bottom: 8px; }
+  .setup-card p { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+  .setup-card input { width: 100%; margin-bottom: 12px; text-align: left; direction: ltr; }
+  .setup-card .btn { width: 100%; justify-content: center; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Setup Screen -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-icon">💎</div>
+    <h2>ניהול תכשיטים</h2>
+    <p>הזן את פרטי Supabase שלך כדי להתחיל</p>
+    <input type="text" id="setupUrl" placeholder="Project URL: https://xxx.supabase.co" dir="ltr">
+    <input type="text" id="setupKey" placeholder="anon public key" dir="ltr">
+    <button class="btn btn-primary" onclick="initApp()">התחבר והתחל ←</button>
+    <p style="margin-top:16px;font-size:12px;color:var(--text2)">הפרטים נשמרים רק בדפדפן שלך</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appContainer" style="display:none">
+  <header>
+    <div class="logo">
+      <span class="logo-icon">💎</span>
+      ניהול תכשיטים
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('repairs')">🔧 תיקונים</button>
+      <button class="tab-btn" onclick="switchTab('orders')">📋 הזמנות</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Repairs Tab -->
+    <div id="tab-repairs">
+      <div class="toolbar">
+        <input class="search-box" type="text" placeholder="🔍 חיפוש לקוח, פריט, תיקון..." oninput="filterCards('repairs', this.value)">
+        <select class="search-box" style="flex:0;min-width:160px" onchange="filterByStatus('repairs', this.value)">
+          <option value="">כל הסטטוסים</option>
+          <option>התקבל</option>
+          <option>אצל הצורף</option>
+          <option>מוכן לאיסוף</option>
+          <option>הוחזר ללקוח</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('repair')">+ תיקון חדש</button>
+      </div>
+      <div class="cards-grid" id="repairsGrid">
+        <div class="loading"><div class="spinner"></div>טוען נתונים...</div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="tab-orders" style="display:none">
+      <div class="toolbar">
+        <input class="search-box" type="text" placeholder="🔍 חיפוש מזמין, פריט, צורף..." oninput="filterCards('orders', this.value)">
+        <select class="search-box" style="flex:0;min-width:160px" onchange="filterByStatus('orders', this.value)">
+          <option value="">כל הסטטוסים</option>
+          <option>ממתין לאישור מודל</option>
+          <option>בייצור</option>
+          <option>מוכן</option>
+          <option>סופק</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('order')">+ הזמנה חדשה</button>
+      </div>
+      <div class="cards-grid" id="ordersGrid">
+        <div class="loading"><div class="spinner"></div>טוען נתונים...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Repair Modal -->
+<div class="modal-overlay" id="repairModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('repairModal')">✕</button>
+    <div class="modal-title" id="repairModalTitle">תיקון חדש</div>
+    <input type="hidden" id="repairId">
+    <div class="form-grid">
+      <div class="section-divider">פרטי לקוח</div>
+      <div class="form-group">
+        <label>שם לקוח *</label>
+        <input type="text" id="r_customer_name" placeholder="שם מלא">
+      </div>
+      <div class="form-group">
+        <label>טלפון</label>
+        <input type="tel" id="r_customer_phone" placeholder="050-0000000">
+      </div>
+
+      <div class="section-divider">פרטי התיקון</div>
+      <div class="form-group">
+        <label>תאריך קבלה *</label>
+        <input type="date" id="r_received_date">
+      </div>
+      <div class="form-group">
+        <label>פריט</label>
+        <select id="r_item_type">
+          <option>טבעת</option>
+          <option>עגיל</option>
+          <option>שרשרת</option>
+          <option>צמיד</option>
+          <option>תליון</option>
+          <option>אחר</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>תיאור התיקון *</label>
+        <textarea id="r_description" placeholder="מה צריך לתקן?"></textarea>
+      </div>
+
+      <div class="section-divider">צורף ועלויות</div>
+      <div class="form-group">
+        <label>לאיזה צורף נמסר</label>
+        <input type="text" id="r_goldsmith" placeholder="שם הצורף">
+      </div>
+      <div class="form-group">
+        <label>תאריך מסירה לצורף</label>
+        <input type="date" id="r_sent_date">
+      </div>
+      <div class="form-group">
+        <label>עלות שלי (₪)</label>
+        <input type="number" id="r_my_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>מחיר ללקוח (₪)</label>
+        <input type="number" id="r_client_price" placeholder="0">
+      </div>
+
+      <div class="section-divider">סטטוס</div>
+      <div class="form-group">
+        <label>סטטוס *</label>
+        <select id="r_status">
+          <option>התקבל</option>
+          <option>אצל הצורף</option>
+          <option>מוכן לאיסוף</option>
+          <option>הוחזר ללקוח</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>תאריך החזרה ללקוח</label>
+        <input type="date" id="r_returned_date">
+      </div>
+      <div class="form-group full">
+        <label>הערות</label>
+        <textarea id="r_notes" placeholder="הערות נוספות..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveRepair()">💾 שמור</button>
+        <button class="btn btn-ghost" onclick="closeModal('repairModal')">ביטול</button>
+        <button class="btn btn-danger" id="deleteRepairBtn" onclick="deleteRecord('repair')" style="display:none;margin-right:auto">🗑 מחק</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    <div class="modal-title" id="orderModalTitle">הזמנה חדשה</div>
+    <input type="hidden" id="orderId">
+    <div class="form-grid">
+      <div class="section-divider">פרטי מזמין</div>
+      <div class="form-group">
+        <label>שם מזמין *</label>
+        <input type="text" id="o_customer_name" placeholder="שם מלא">
+      </div>
+      <div class="form-group">
+        <label>טלפון</label>
+        <input type="tel" id="o_customer_phone" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label>תאריך הזמנה *</label>
+        <input type="date" id="o_order_date">
+      </div>
+      <div class="form-group">
+        <label>דד-ליין לאספקה</label>
+        <input type="date" id="o_deadline">
+      </div>
+
+      <div class="section-divider">פרטי הפריט</div>
+      <div class="form-group">
+        <label>פריט *</label>
+        <select id="o_item_type">
+          <option>טבעת</option>
+          <option>עגיל</option>
+          <option>שרשרת</option>
+          <option>צמיד</option>
+          <option>תליון</option>
+          <option>אחר</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>זהב</label>
+        <select id="o_gold_karat">
+          <option>14</option>
+          <option>18</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>צבע</label>
+        <select id="o_gold_color">
+          <option>צהוב</option>
+          <option>לבן</option>
+          <option>רוז גולד</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>מידה (טבעת)</label>
+        <input type="text" id="o_ring_size" placeholder="מידה">
+      </div>
+      <div class="form-group">
+        <label>אורך (שרשרת/צמיד)</label>
+        <input type="text" id="o_length" placeholder='ס"מ'>
+      </div>
+      <div class="form-group">
+        <label>עיצוב אישי</label>
+        <select id="o_custom_design">
+          <option>לא</option>
+          <option>כן</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>תאריך אישור מודל</label>
+        <input type="date" id="o_model_approved_date">
+      </div>
+
+      <div class="section-divider">יהלומים</div>
+      <div class="form-group">
+        <label>יהלום ראשי</label>
+        <select id="o_main_diamond">
+          <option>אין</option>
+          <option>טבעי</option>
+          <option>מעבדה</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>משקל יהלום (קרט)</label>
+        <input type="number" id="o_diamond_weight" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>יהלומי צד</label>
+        <select id="o_side_diamonds">
+          <option>אין</option>
+          <option>טבעי</option>
+          <option>מעבדה</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>האם אבנים סופקו לצורף</label>
+        <select id="o_stones_supplied">
+          <option>לא</option>
+          <option>כן</option>
+        </select>
+      </div>
+
+      <div class="section-divider">עלויות</div>
+      <div class="form-group">
+        <label>עלות יהלום ראשי (₪)</label>
+        <input type="number" id="o_main_diamond_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>עלות יהלומי צד (₪)</label>
+        <input type="number" id="o_side_diamond_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>עלות עבודה (₪)</label>
+        <input type="number" id="o_work_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>מחיר ללקוח (₪)</label>
+        <input type="number" id="o_client_price" placeholder="0">
+      </div>
+
+      <div class="section-divider">ייצור ואספקה</div>
+      <div class="form-group">
+        <label>לאיזה צורף נמסר</label>
+        <input type="text" id="o_goldsmith" placeholder="שם הצורף">
+      </div>
+      <div class="form-group">
+        <label>תאריך מסירה לצורף</label>
+        <input type="date" id="o_sent_to_goldsmith">
+      </div>
+      <div class="form-group">
+        <label>תאריך אספקה בפועל</label>
+        <input type="date" id="o_delivered_date">
+      </div>
+      <div class="form-group">
+        <label>סטטוס *</label>
+        <select id="o_status">
+          <option>ממתין לאישור מודל</option>
+          <option>בייצור</option>
+          <option>מוכן</option>
+          <option>סופק</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>הערות</label>
+        <textarea id="o_notes" placeholder="הערות נוספות..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveOrder()">💾 שמור</button>
+        <button class="btn btn-ghost" onclick="closeModal('orderModal')">ביטול</button>
+        <button class="btn btn-danger" id="deleteOrderBtn" onclick="deleteRecord('order')" style="display:none;margin-right:auto">🗑 מחק</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let supabase;
+let repairs = [], orders = [];
+let currentTab = 'repairs';
+let repairsFilter = '', ordersFilter = '';
+let repairsStatusFilter = '', ordersStatusFilter = '';
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function initApp() {
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  if (!url || !key) { showToast('נא למלא את שני השדות'); return; }
+
+  try {
+    supabase = window.supabase.createClient(url, key);
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    createTablesAndLoad();
+  } catch(e) {
+    showToast('שגיאה בחיבור — בדוק את הפרטים');
+  }
+}
+
+async function createTablesAndLoad() {
+  // Create tables via RPC if they don't exist
+  await supabase.rpc('create_jewelry_tables').catch(() => {});
+  // Try creating via SQL (will fail silently if exists)
+  await ensureTables();
+  loadRepairs();
+  loadOrders();
+}
+
+async function ensureTables() {
+  // Insert a dummy call to trigger table creation awareness
+  // Tables must be created manually in Supabase - show guide if empty
+  const { error } = await supabase.from('repairs').select('id').limit(1);
+  if (error && error.code === '42P01') {
+    showSetupGuide();
+  }
+}
+
+function showSetupGuide() {
+  document.getElementById('repairsGrid').innerHTML = `
+    <div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">⚙️</div>
+      <h3>צריך ליצור את הטבלאות ב-Supabase</h3>
+      <p style="margin:12px 0;color:var(--text2);font-size:13px">לך ל-Supabase → SQL Editor והדבק את הקוד הבא:</p>
+      <textarea style="width:100%;height:200px;font-size:11px;direction:ltr;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text2)" readonly>
+CREATE TABLE repairs (
+  id BIGSERIAL PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT,
+  received_date DATE,
+  item_type TEXT,
+  description TEXT,
+  goldsmith TEXT,
+  sent_date DATE,
+  my_cost NUMERIC,
+  client_price NUMERIC,
+  status TEXT DEFAULT 'התקבל',
+  returned_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE orders (
+  id BIGSERIAL PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT,
+  order_date DATE,
+  deadline DATE,
+  item_type TEXT,
+  gold_karat TEXT,
+  gold_color TEXT,
+  ring_size TEXT,
+  length TEXT,
+  custom_design TEXT,
+  model_approved_date DATE,
+  main_diamond TEXT,
+  diamond_weight NUMERIC,
+  side_diamonds TEXT,
+  stones_supplied TEXT,
+  main_diamond_cost NUMERIC,
+  side_diamond_cost NUMERIC,
+  work_cost NUMERIC,
+  client_price NUMERIC,
+  goldsmith TEXT,
+  sent_to_goldsmith DATE,
+  delivered_date DATE,
+  status TEXT DEFAULT 'ממתין לאישור מודל',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE repairs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow all" ON repairs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
+      </textarea>
+      <p style="margin-top:12px;font-size:13px;color:var(--text2)">אחרי ריצת הקוד — רענן את הדף</p>
+    </div>`;
+}
+
+// ── Auto-connect ──────────────────────────────────────────────────────────────
+window.onload = () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('r_received_date').value = today;
+  document.getElementById('o_order_date').value = today;
+};
+
+// Auto-connect immediately when Supabase library loads
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const SUPABASE_URL = 'https://hpothsyhuowrwdsqkffb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhwb3Roc3lodW93cndkc3FrZmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTM3NzMsImV4cCI6MjA5NDYyOTc3M30.PVi8jINjiewlDjI32qBZytVKqqci0YT3FULGbLfqkZk';
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      loadRepairs();
+      loadOrders();
+    } catch(e) {
+      alert('שגיאה בחיבור: ' + e.message);
+    }
+  }, 500);
+});
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function loadRepairs() {
+  const { data, error } = await supabase.from('repairs').select('*').order('id', { ascending: false });
+  if (error) { showSetupGuide(); return; }
+  repairs = data || [];
+  renderRepairs();
+}
+
+async function loadOrders() {
+  const { data, error } = await supabase.from('orders').select('*').order('id', { ascending: false });
+  if (error) return;
+  orders = data || [];
+  renderOrders();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  const map = {
+    'התקבל': 'received', 'אצל הצורף': 'inprogress',
+    'מוכן לאיסוף': 'ready', 'הוחזר ללקוח': 'done',
+    'ממתין לאישור מודל': 'received', 'בייצור': 'inprogress',
+    'מוכן': 'ready', 'סופק': 'done'
+  };
+  const cls = map[status] || 'received';
+  return `<span class="badge badge-${cls}">${status}</span>`;
+}
+
+function fmt(val, prefix='') {
+  if (!val && val !== 0) return '—';
+  return prefix + val;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtMoney(n) {
+  if (!n && n !== 0) return '—';
+  return '₪' + Number(n).toLocaleString('he-IL');
+}
+
+function renderRepairs() {
+  const grid = document.getElementById('repairsGrid');
+  let list = repairs.filter(r => {
+    const q = repairsFilter.toLowerCase();
+    const match = !q || (r.customer_name||'').toLowerCase().includes(q)
+      || (r.description||'').toLowerCase().includes(q)
+      || (r.item_type||'').toLowerCase().includes(q)
+      || (r.goldsmith||'').toLowerCase().includes(q);
+    const statusMatch = !repairsStatusFilter || r.status === repairsStatusFilter;
+    return match && statusMatch;
+  });
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">🔧</div>
+      <h3>אין תיקונים</h3>
+      <p>לחץ "+ תיקון חדש" כדי להוסיף</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(r => `
+    <div class="card" onclick="editRepair(${r.id})">
+      <div class="card-header">
+        <div>
+          <div class="card-id">#${String(r.id).padStart(4,'0')}</div>
+          <div class="card-title">${r.customer_name}</div>
+          <div class="card-subtitle">${r.item_type || ''} · ${fmtDate(r.received_date)}</div>
+        </div>
+        ${statusBadge(r.status)}
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-label">תיאור</span><span class="card-value">${r.description||'—'}</span></div>
+        <div class="card-row"><span class="card-label">צורף</span><span class="card-value">${r.goldsmith||'—'}</span></div>
+        <div class="card-row"><span class="card-label">עלות שלי</span><span class="card-value">${fmtMoney(r.my_cost)}</span></div>
+        <div class="card-row"><span class="card-label">מחיר ללקוח</span><span class="card-value" style="color:var(--gold)">${fmtMoney(r.client_price)}</span></div>
+        ${r.returned_date ? `<div class="card-row"><span class="card-label">הוחזר</span><span class="card-value">${fmtDate(r.returned_date)}</span></div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOrders() {
+  const grid = document.getElementById('ordersGrid');
+  let list = orders.filter(o => {
+    const q = ordersFilter.toLowerCase();
+    const match = !q || (o.customer_name||'').toLowerCase().includes(q)
+      || (o.item_type||'').toLowerCase().includes(q)
+      || (o.goldsmith||'').toLowerCase().includes(q);
+    const statusMatch = !ordersStatusFilter || o.status === ordersStatusFilter;
+    return match && statusMatch;
+  });
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">📋</div>
+      <h3>אין הזמנות</h3>
+      <p>לחץ "+ הזמנה חדשה" כדי להוסיף</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(o => {
+    const totalCost = (Number(o.main_diamond_cost)||0) + (Number(o.side_diamond_cost)||0) + (Number(o.work_cost)||0);
+    return `
+    <div class="card" onclick="editOrder(${o.id})">
+      <div class="card-header">
+        <div>
+          <div class="card-id">#${String(o.id).padStart(4,'0')}</div>
+          <div class="card-title">${o.customer_name}</div>
+          <div class="card-subtitle">${o.item_type||''} · זהב ${o.gold_karat}K ${o.gold_color||''}</div>
+        </div>
+        ${statusBadge(o.status)}
+      </div>
+      <div class="card-body">
+        ${o.main_diamond !== 'אין' ? `<div class="card-row"><span class="card-label">יהלום</span><span class="card-value">${o.main_diamond} ${o.diamond_weight||''} קרט</span></div>` : ''}
+        <div class="card-row"><span class="card-label">צורף</span><span class="card-value">${o.goldsmith||'—'}</span></div>
+        ${o.deadline ? `<div class="card-row"><span class="card-label">דד-ליין</span><span class="card-value" style="color:var(--orange)">${fmtDate(o.deadline)}</span></div>` : ''}
+        <div class="card-row"><span class="card-label">עלות שלי</span><span class="card-value">${totalCost ? fmtMoney(totalCost) : '—'}</span></div>
+        <div class="card-row"><span class="card-label">מחיר ללקוח</span><span class="card-value" style="color:var(--gold)">${fmtMoney(o.client_price)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Tab ───────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0 && tab==='repairs') || (i===1 && tab==='orders'));
+  });
+  document.getElementById('tab-repairs').style.display = tab==='repairs' ? '' : 'none';
+  document.getElementById('tab-orders').style.display  = tab==='orders'  ? '' : 'none';
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function filterCards(type, q) {
+  if (type==='repairs') { repairsFilter = q; renderRepairs(); }
+  else { ordersFilter = q; renderOrders(); }
+}
+function filterByStatus(type, s) {
+  if (type==='repairs') { repairsStatusFilter = s; renderRepairs(); }
+  else { ordersStatusFilter = s; renderOrders(); }
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(type) {
+  if (type==='repair') {
+    document.getElementById('repairModalTitle').textContent = 'תיקון חדש';
+    document.getElementById('repairId').value = '';
+    document.getElementById('deleteRepairBtn').style.display = 'none';
+    ['r_customer_name','r_customer_phone','r_goldsmith','r_notes'].forEach(id => document.getElementById(id).value='');
+    ['r_sent_date','r_returned_date'].forEach(id => document.getElementById(id).value='');
+    ['r_my_cost','r_client_price'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('r_received_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('r_item_type').value = 'טבעת';
+    document.getElementById('r_status').value = 'התקבל';
+    document.getElementById('repairModal').classList.add('open');
+  } else {
+    document.getElementById('orderModalTitle').textContent = 'הזמנה חדשה';
+    document.getElementById('orderId').value = '';
+    document.getElementById('deleteOrderBtn').style.display = 'none';
+    ['o_customer_name','o_customer_phone','o_goldsmith','o_notes','o_ring_size','o_length','o_diamond_weight'].forEach(id => document.getElementById(id).value='');
+    ['o_deadline','o_model_approved_date','o_sent_to_goldsmith','o_delivered_date'].forEach(id => document.getElementById(id).value='');
+    ['o_main_diamond_cost','o_side_diamond_cost','o_work_cost','o_client_price'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('o_order_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('o_item_type').value = 'טבעת';
+    document.getElementById('o_gold_karat').value = '14';
+    document.getElementById('o_gold_color').value = 'צהוב';
+    document.getElementById('o_custom_design').value = 'לא';
+    document.getElementById('o_main_diamond').value = 'אין';
+    document.getElementById('o_side_diamonds').value = 'אין';
+    document.getElementById('o_stones_supplied').value = 'לא';
+    document.getElementById('o_status').value = 'ממתין לאישור מודל';
+    document.getElementById('orderModal').classList.add('open');
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── Edit ──────────────────────────────────────────────────────────────────────
+function editRepair(id) {
+  const r = repairs.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('repairModalTitle').textContent = 'עריכת תיקון #' + String(id).padStart(4,'0');
+  document.getElementById('repairId').value = id;
+  document.getElementById('deleteRepairBtn').style.display = '';
+  document.getElementById('r_customer_name').value = r.customer_name||'';
+  document.getElementById('r_customer_phone').value = r.customer_phone||'';
+  document.getElementById('r_received_date').value = r.received_date||'';
+  document.getElementById('r_item_type').value = r.item_type||'טבעת';
+  document.getElementById('r_description').value = r.description||'';
+  document.getElementById('r_goldsmith').value = r.goldsmith||'';
+  document.getElementById('r_sent_date').value = r.sent_date||'';
+  document.getElementById('r_my_cost').value = r.my_cost||'';
+  document.getElementById('r_client_price').value = r.client_price||'';
+  document.getElementById('r_status').value = r.status||'התקבל';
+  document.getElementById('r_returned_date').value = r.returned_date||'';
+  document.getElementById('r_notes').value = r.notes||'';
+  document.getElementById('repairModal').classList.add('open');
+}
+
+function editOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('orderModalTitle').textContent = 'עריכת הזמנה #' + String(id).padStart(4,'0');
+  document.getElementById('orderId').value = id;
+  document.getElementById('deleteOrderBtn').style.display = '';
+  document.getElementById('o_customer_name').value = o.customer_name||'';
+  document.getElementById('o_customer_phone').value = o.customer_phone||'';
+  document.getElementById('o_order_date').value = o.order_date||'';
+  document.getElementById('o_deadline').value = o.deadline||'';
+  document.getElementById('o_item_type').value = o.item_type||'טבעת';
+  document.getElementById('o_gold_karat').value = o.gold_karat||'14';
+  document.getElementById('o_gold_color').value = o.gold_color||'צהוב';
+  document.getElementById('o_ring_size').value = o.ring_size||'';
+  document.getElementById('o_length').value = o.length||'';
+  document.getElementById('o_custom_design').value = o.custom_design||'לא';
+  document.getElementById('o_model_approved_date').value = o.model_approved_date||'';
+  document.getElementById('o_main_diamond').value = o.main_diamond||'אין';
+  document.getElementById('o_diamond_weight').value = o.diamond_weight||'';
+  document.getElementById('o_side_diamonds').value = o.side_diamonds||'אין';
+  document.getElementById('o_stones_supplied').value = o.stones_supplied||'לא';
+  document.getElementById('o_main_diamond_cost').value = o.main_diamond_cost||'';
+  document.getElementById('o_side_diamond_cost').value = o.side_diamond_cost||'';
+  document.getElementById('o_work_cost').value = o.work_cost||'';
+  document.getElementById('o_client_price').value = o.client_price||'';
+  document.getElementById('o_goldsmith').value = o.goldsmith||'';
+  document.getElementById('o_sent_to_goldsmith').value = o.sent_to_goldsmith||'';
+  document.getElementById('o_delivered_date').value = o.delivered_date||'';
+  document.getElementById('o_status').value = o.status||'ממתין לאישור מודל';
+  document.getElementById('o_notes').value = o.notes||'';
+  document.getElementById('orderModal').classList.add('open');
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+function g(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() || null : null;
+}
+
+async function saveRepair() {
+  const name = g('r_customer_name');
+  if (!name) { showToast('נא למלא שם לקוח'); return; }
+  const payload = {
+    customer_name: name,
+    customer_phone: g('r_customer_phone'),
+    received_date: g('r_received_date'),
+    item_type: g('r_item_type'),
+    description: g('r_description'),
+    goldsmith: g('r_goldsmith'),
+    sent_date: g('r_sent_date'),
+    my_cost: g('r_my_cost') ? Number(g('r_my_cost')) : null,
+    client_price: g('r_client_price') ? Number(g('r_client_price')) : null,
+    status: g('r_status'),
+    returned_date: g('r_returned_date'),
+    notes: g('r_notes'),
+  };
+  const id = document.getElementById('repairId').value;
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('repairs').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('repairs').insert(payload));
+  }
+  if (error) { showToast('שגיאה בשמירה: ' + error.message); return; }
+  showToast(id ? 'תיקון עודכן ✓' : 'תיקון נוסף ✓');
+  closeModal('repairModal');
+  loadRepairs();
+}
+
+async function saveOrder() {
+  const name = g('o_customer_name');
+  if (!name) { showToast('נא למלא שם מזמין'); return; }
+  const payload = {
+    customer_name: name,
+    customer_phone: g('o_customer_phone'),
+    order_date: g('o_order_date'),
+    deadline: g('o_deadline'),
+    item_type: g('o_item_type'),
+    gold_karat: g('o_gold_karat'),
+    gold_color: g('o_gold_color'),
+    ring_size: g('o_ring_size'),
+    length: g('o_length'),
+    custom_design: g('o_custom_design'),
+    model_approved_date: g('o_model_approved_date'),
+    main_diamond: g('o_main_diamond'),
+    diamond_weight: g('o_diamond_weight') ? Number(g('o_diamond_weight')) : null,
+    side_diamonds: g('o_side_diamonds'),
+    stones_supplied: g('o_stones_supplied'),
+    main_diamond_cost: g('o_main_diamond_cost') ? Number(g('o_main_diamond_cost')) : null,
+    side_diamond_cost: g('o_side_diamond_cost') ? Number(g('o_side_diamond_cost')) : null,
+    work_cost: g('o_work_cost') ? Number(g('o_work_cost')) : null,
+    client_price: g('o_client_price') ? Number(g('o_client_price')) : null,
+    goldsmith: g('o_goldsmith'),
+    sent_to_goldsmith: g('o_sent_to_goldsmith'),
+    delivered_date: g('o_delivered_date'),
+    status: g('o_status'),
+    notes: g('o_notes'),
+  };
+  const id = document.getElementById('orderId').value;
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('orders').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('orders').insert(payload));
+  }
+  if (error) { showToast('שגיאה בשמירה: ' + error.message); return; }
+  showToast(id ? 'הזמנה עודכנה ✓' : 'הזמנה נוספה ✓');
+  closeModal('orderModal');
+  loadOrders();
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteRecord(type) {
+  if (!confirm('למחוק את הרשומה? פעולה זו אינה הפיכה.')) return;
+  if (type === 'repair') {
+    const id = document.getElementById('repairId').value;
+    await supabase.from('repairs').delete().eq('id', id);
+    showToast('תיקון נמחק');
+    closeModal('repairModal');
+    loadRepairs();
+  } else {
+    const id = document.getElementById('orderId').value;
+    await supabase.from('orders').delete().eq('id', id);
+    showToast('הזמנה נמחקה');
+    closeModal('orderModal');
+    loadOrders();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) el.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול תכשיטים</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --gold-dark: #9B7B2E;
+    --bg: #0F0F0F;
+    --bg2: #1A1A1A;
+    --bg3: #242424;
+    --border: #2E2E2E;
+    --text: #F0EDE8;
+    --text2: #A09890;
+    --green: #4CAF7A;
+    --red: #CF6679;
+    --blue: #5B9BD5;
+    --orange: #D4945A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+  .logo-icon { font-size: 22px; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg3);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--gold);
+    color: #0F0F0F;
+    font-weight: 700;
+  }
+
+  /* ── Main ── */
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: var(--gold); }
+  .search-box::placeholder { color: var(--text2); }
+  .btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: var(--gold); color: #0F0F0F; }
+  .btn-primary:hover { background: var(--gold-light); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-ghost {
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── Cards Grid ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: border-color 0.2s, transform 0.15s;
+    cursor: pointer;
+  }
+  .card:hover { border-color: var(--gold-dark); transform: translateY(-1px); }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .card-id {
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card-subtitle { font-size: 13px; color: var(--text2); }
+  .card-body { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .card-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+  }
+  .card-label { color: var(--text2); }
+  .card-value { font-weight: 500; }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-received  { background: #1A3A2A; color: var(--green); }
+  .badge-inprogress { background: #2A2A1A; color: var(--orange); }
+  .badge-ready     { background: #1A2A3A; color: var(--blue); }
+  .badge-done      { background: #2A1A1A; color: var(--red); }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 680px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 28px;
+    position: relative;
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--bg3);
+    border: none;
+    color: var(--text2);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  /* ── Form ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; color: var(--text2); font-weight: 500; }
+  input, select, textarea {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    direction: rtl;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 70px; }
+  select option { background: var(--bg3); }
+  .section-divider {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+    margin-top: 8px;
+  }
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+    margin-top: 24px;
+    grid-column: 1 / -1;
+  }
+
+  /* ── Empty ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text2);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty h3 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bg3);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text2);
+    font-size: 15px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Setup screen ── */
+  .setup-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  .setup-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  .setup-icon { font-size: 48px; margin-bottom: 16px; }
+  .setup-card h2 { color: var(--gold); margin-bottom: 8px; }
+  .setup-card p { color: var(--text2); font-size: 14px; margin-bottom: 24px; }
+  .setup-card input { width: 100%; margin-bottom: 12px; text-align: left; direction: ltr; }
+  .setup-card .btn { width: 100%; justify-content: center; }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cards-grid { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Setup Screen -->
+<div class="setup-screen" id="setupScreen">
+  <div class="setup-card">
+    <div class="setup-icon">💎</div>
+    <h2>ניהול תכשיטים</h2>
+    <p>הזן את פרטי Supabase שלך כדי להתחיל</p>
+    <input type="text" id="setupUrl" placeholder="Project URL: https://xxx.supabase.co" dir="ltr">
+    <input type="text" id="setupKey" placeholder="anon public key" dir="ltr">
+    <button class="btn btn-primary" onclick="initApp()">התחבר והתחל ←</button>
+    <p style="margin-top:16px;font-size:12px;color:var(--text2)">הפרטים נשמרים רק בדפדפן שלך</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appContainer" style="display:none">
+  <header>
+    <div class="logo">
+      <span class="logo-icon">💎</span>
+      ניהול תכשיטים
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('repairs')">🔧 תיקונים</button>
+      <button class="tab-btn" onclick="switchTab('orders')">📋 הזמנות</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Repairs Tab -->
+    <div id="tab-repairs">
+      <div class="toolbar">
+        <input class="search-box" type="text" placeholder="🔍 חיפוש לקוח, פריט, תיקון..." oninput="filterCards('repairs', this.value)">
+        <select class="search-box" style="flex:0;min-width:160px" onchange="filterByStatus('repairs', this.value)">
+          <option value="">כל הסטטוסים</option>
+          <option>התקבל</option>
+          <option>אצל הצורף</option>
+          <option>מוכן לאיסוף</option>
+          <option>הוחזר ללקוח</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('repair')">+ תיקון חדש</button>
+      </div>
+      <div class="cards-grid" id="repairsGrid">
+        <div class="loading"><div class="spinner"></div>טוען נתונים...</div>
+      </div>
+    </div>
+
+    <!-- Orders Tab -->
+    <div id="tab-orders" style="display:none">
+      <div class="toolbar">
+        <input class="search-box" type="text" placeholder="🔍 חיפוש מזמין, פריט, צורף..." oninput="filterCards('orders', this.value)">
+        <select class="search-box" style="flex:0;min-width:160px" onchange="filterByStatus('orders', this.value)">
+          <option value="">כל הסטטוסים</option>
+          <option>ממתין לאישור מודל</option>
+          <option>בייצור</option>
+          <option>מוכן</option>
+          <option>סופק</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('order')">+ הזמנה חדשה</button>
+      </div>
+      <div class="cards-grid" id="ordersGrid">
+        <div class="loading"><div class="spinner"></div>טוען נתונים...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Repair Modal -->
+<div class="modal-overlay" id="repairModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('repairModal')">✕</button>
+    <div class="modal-title" id="repairModalTitle">תיקון חדש</div>
+    <input type="hidden" id="repairId">
+    <div class="form-grid">
+      <div class="section-divider">פרטי לקוח</div>
+      <div class="form-group">
+        <label>שם לקוח *</label>
+        <input type="text" id="r_customer_name" placeholder="שם מלא">
+      </div>
+      <div class="form-group">
+        <label>טלפון</label>
+        <input type="tel" id="r_customer_phone" placeholder="050-0000000">
+      </div>
+
+      <div class="section-divider">פרטי התיקון</div>
+      <div class="form-group">
+        <label>תאריך קבלה *</label>
+        <input type="date" id="r_received_date">
+      </div>
+      <div class="form-group">
+        <label>פריט</label>
+        <select id="r_item_type">
+          <option>טבעת</option>
+          <option>עגיל</option>
+          <option>שרשרת</option>
+          <option>צמיד</option>
+          <option>תליון</option>
+          <option>אחר</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>תיאור התיקון *</label>
+        <textarea id="r_description" placeholder="מה צריך לתקן?"></textarea>
+      </div>
+
+      <div class="section-divider">צורף ועלויות</div>
+      <div class="form-group">
+        <label>לאיזה צורף נמסר</label>
+        <input type="text" id="r_goldsmith" placeholder="שם הצורף">
+      </div>
+      <div class="form-group">
+        <label>תאריך מסירה לצורף</label>
+        <input type="date" id="r_sent_date">
+      </div>
+      <div class="form-group">
+        <label>עלות שלי (₪)</label>
+        <input type="number" id="r_my_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>מחיר ללקוח (₪)</label>
+        <input type="number" id="r_client_price" placeholder="0">
+      </div>
+
+      <div class="section-divider">סטטוס</div>
+      <div class="form-group">
+        <label>סטטוס *</label>
+        <select id="r_status">
+          <option>התקבל</option>
+          <option>אצל הצורף</option>
+          <option>מוכן לאיסוף</option>
+          <option>הוחזר ללקוח</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>תאריך החזרה ללקוח</label>
+        <input type="date" id="r_returned_date">
+      </div>
+      <div class="form-group full">
+        <label>הערות</label>
+        <textarea id="r_notes" placeholder="הערות נוספות..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveRepair()">💾 שמור</button>
+        <button class="btn btn-ghost" onclick="closeModal('repairModal')">ביטול</button>
+        <button class="btn btn-danger" id="deleteRepairBtn" onclick="deleteRecord('repair')" style="display:none;margin-right:auto">🗑 מחק</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order Modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('orderModal')">✕</button>
+    <div class="modal-title" id="orderModalTitle">הזמנה חדשה</div>
+    <input type="hidden" id="orderId">
+    <div class="form-grid">
+      <div class="section-divider">פרטי מזמין</div>
+      <div class="form-group">
+        <label>שם מזמין *</label>
+        <input type="text" id="o_customer_name" placeholder="שם מלא">
+      </div>
+      <div class="form-group">
+        <label>טלפון</label>
+        <input type="tel" id="o_customer_phone" placeholder="050-0000000">
+      </div>
+      <div class="form-group">
+        <label>תאריך הזמנה *</label>
+        <input type="date" id="o_order_date">
+      </div>
+      <div class="form-group">
+        <label>דד-ליין לאספקה</label>
+        <input type="date" id="o_deadline">
+      </div>
+
+      <div class="section-divider">פרטי הפריט</div>
+      <div class="form-group">
+        <label>פריט *</label>
+        <select id="o_item_type">
+          <option>טבעת</option>
+          <option>עגיל</option>
+          <option>שרשרת</option>
+          <option>צמיד</option>
+          <option>תליון</option>
+          <option>אחר</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>זהב</label>
+        <select id="o_gold_karat">
+          <option>14</option>
+          <option>18</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>צבע</label>
+        <select id="o_gold_color">
+          <option>צהוב</option>
+          <option>לבן</option>
+          <option>רוז גולד</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>מידה (טבעת)</label>
+        <input type="text" id="o_ring_size" placeholder="מידה">
+      </div>
+      <div class="form-group">
+        <label>אורך (שרשרת/צמיד)</label>
+        <input type="text" id="o_length" placeholder='ס"מ'>
+      </div>
+      <div class="form-group">
+        <label>עיצוב אישי</label>
+        <select id="o_custom_design">
+          <option>לא</option>
+          <option>כן</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>תאריך אישור מודל</label>
+        <input type="date" id="o_model_approved_date">
+      </div>
+
+      <div class="section-divider">יהלומים</div>
+      <div class="form-group">
+        <label>יהלום ראשי</label>
+        <select id="o_main_diamond">
+          <option>אין</option>
+          <option>טבעי</option>
+          <option>מעבדה</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>משקל יהלום (קרט)</label>
+        <input type="number" id="o_diamond_weight" placeholder="0.00" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>יהלומי צד</label>
+        <select id="o_side_diamonds">
+          <option>אין</option>
+          <option>טבעי</option>
+          <option>מעבדה</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>האם אבנים סופקו לצורף</label>
+        <select id="o_stones_supplied">
+          <option>לא</option>
+          <option>כן</option>
+        </select>
+      </div>
+
+      <div class="section-divider">עלויות</div>
+      <div class="form-group">
+        <label>עלות יהלום ראשי (₪)</label>
+        <input type="number" id="o_main_diamond_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>עלות יהלומי צד (₪)</label>
+        <input type="number" id="o_side_diamond_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>עלות עבודה (₪)</label>
+        <input type="number" id="o_work_cost" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>מחיר ללקוח (₪)</label>
+        <input type="number" id="o_client_price" placeholder="0">
+      </div>
+
+      <div class="section-divider">ייצור ואספקה</div>
+      <div class="form-group">
+        <label>לאיזה צורף נמסר</label>
+        <input type="text" id="o_goldsmith" placeholder="שם הצורף">
+      </div>
+      <div class="form-group">
+        <label>תאריך מסירה לצורף</label>
+        <input type="date" id="o_sent_to_goldsmith">
+      </div>
+      <div class="form-group">
+        <label>תאריך אספקה בפועל</label>
+        <input type="date" id="o_delivered_date">
+      </div>
+      <div class="form-group">
+        <label>סטטוס *</label>
+        <select id="o_status">
+          <option>ממתין לאישור מודל</option>
+          <option>בייצור</option>
+          <option>מוכן</option>
+          <option>סופק</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label>הערות</label>
+        <textarea id="o_notes" placeholder="הערות נוספות..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveOrder()">💾 שמור</button>
+        <button class="btn btn-ghost" onclick="closeModal('orderModal')">ביטול</button>
+        <button class="btn btn-danger" id="deleteOrderBtn" onclick="deleteRecord('order')" style="display:none;margin-right:auto">🗑 מחק</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let supabase;
+let repairs = [], orders = [];
+let currentTab = 'repairs';
+let repairsFilter = '', ordersFilter = '';
+let repairsStatusFilter = '', ordersStatusFilter = '';
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function initApp() {
+  const url = document.getElementById('setupUrl').value.trim();
+  const key = document.getElementById('setupKey').value.trim();
+  if (!url || !key) { showToast('נא למלא את שני השדות'); return; }
+
+  try {
+    supabase = window.supabase.createClient(url, key);
+    localStorage.setItem('sb_url', url);
+    localStorage.setItem('sb_key', key);
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    createTablesAndLoad();
+  } catch(e) {
+    showToast('שגיאה בחיבור — בדוק את הפרטים');
+  }
+}
+
+async function createTablesAndLoad() {
+  // Create tables via RPC if they don't exist
+  await supabase.rpc('create_jewelry_tables').catch(() => {});
+  // Try creating via SQL (will fail silently if exists)
+  await ensureTables();
+  loadRepairs();
+  loadOrders();
+}
+
+async function ensureTables() {
+  // Insert a dummy call to trigger table creation awareness
+  // Tables must be created manually in Supabase - show guide if empty
+  const { error } = await supabase.from('repairs').select('id').limit(1);
+  if (error && error.code === '42P01') {
+    showSetupGuide();
+  }
+}
+
+function showSetupGuide() {
+  document.getElementById('repairsGrid').innerHTML = `
+    <div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">⚙️</div>
+      <h3>צריך ליצור את הטבלאות ב-Supabase</h3>
+      <p style="margin:12px 0;color:var(--text2);font-size:13px">לך ל-Supabase → SQL Editor והדבק את הקוד הבא:</p>
+      <textarea style="width:100%;height:200px;font-size:11px;direction:ltr;text-align:left;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text2)" readonly>
+CREATE TABLE repairs (
+  id BIGSERIAL PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT,
+  received_date DATE,
+  item_type TEXT,
+  description TEXT,
+  goldsmith TEXT,
+  sent_date DATE,
+  my_cost NUMERIC,
+  client_price NUMERIC,
+  status TEXT DEFAULT 'התקבל',
+  returned_date DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE orders (
+  id BIGSERIAL PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT,
+  order_date DATE,
+  deadline DATE,
+  item_type TEXT,
+  gold_karat TEXT,
+  gold_color TEXT,
+  ring_size TEXT,
+  length TEXT,
+  custom_design TEXT,
+  model_approved_date DATE,
+  main_diamond TEXT,
+  diamond_weight NUMERIC,
+  side_diamonds TEXT,
+  stones_supplied TEXT,
+  main_diamond_cost NUMERIC,
+  side_diamond_cost NUMERIC,
+  work_cost NUMERIC,
+  client_price NUMERIC,
+  goldsmith TEXT,
+  sent_to_goldsmith DATE,
+  delivered_date DATE,
+  status TEXT DEFAULT 'ממתין לאישור מודל',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE repairs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow all" ON repairs FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
+      </textarea>
+      <p style="margin-top:12px;font-size:13px;color:var(--text2)">אחרי ריצת הקוד — רענן את הדף</p>
+    </div>`;
+}
+
+// ── Auto-connect ──────────────────────────────────────────────────────────────
+window.onload = () => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('r_received_date').value = today;
+  document.getElementById('o_order_date').value = today;
+};
+
+// Auto-connect immediately when Supabase library loads
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    const SUPABASE_URL = 'https://hpothsyhuowrwdsqkffb.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhwb3Roc3lodW93cndkc3FrZmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTM3NzMsImV4cCI6MjA5NDYyOTc3M30.PVi8jINjiewlDjI32qBZytVKqqci0YT3FULGbLfqkZk';
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      document.getElementById('setupScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'block';
+      loadRepairs();
+      loadOrders();
+    } catch(e) {
+      alert('שגיאה בחיבור: ' + e.message);
+    }
+  }, 500);
+});
+
+// ── Load ──────────────────────────────────────────────────────────────────────
+async function loadRepairs() {
+  const { data, error } = await supabase.from('repairs').select('*').order('id', { ascending: false });
+  if (error) { showSetupGuide(); return; }
+  repairs = data || [];
+  renderRepairs();
+}
+
+async function loadOrders() {
+  const { data, error } = await supabase.from('orders').select('*').order('id', { ascending: false });
+  if (error) return;
+  orders = data || [];
+  renderOrders();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  const map = {
+    'התקבל': 'received', 'אצל הצורף': 'inprogress',
+    'מוכן לאיסוף': 'ready', 'הוחזר ללקוח': 'done',
+    'ממתין לאישור מודל': 'received', 'בייצור': 'inprogress',
+    'מוכן': 'ready', 'סופק': 'done'
+  };
+  const cls = map[status] || 'received';
+  return `<span class="badge badge-${cls}">${status}</span>`;
+}
+
+function fmt(val, prefix='') {
+  if (!val && val !== 0) return '—';
+  return prefix + val;
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${y}`;
+}
+function fmtMoney(n) {
+  if (!n && n !== 0) return '—';
+  return '₪' + Number(n).toLocaleString('he-IL');
+}
+
+function renderRepairs() {
+  const grid = document.getElementById('repairsGrid');
+  let list = repairs.filter(r => {
+    const q = repairsFilter.toLowerCase();
+    const match = !q || (r.customer_name||'').toLowerCase().includes(q)
+      || (r.description||'').toLowerCase().includes(q)
+      || (r.item_type||'').toLowerCase().includes(q)
+      || (r.goldsmith||'').toLowerCase().includes(q);
+    const statusMatch = !repairsStatusFilter || r.status === repairsStatusFilter;
+    return match && statusMatch;
+  });
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">🔧</div>
+      <h3>אין תיקונים</h3>
+      <p>לחץ "+ תיקון חדש" כדי להוסיף</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(r => `
+    <div class="card" onclick="editRepair(${r.id})">
+      <div class="card-header">
+        <div>
+          <div class="card-id">#${String(r.id).padStart(4,'0')}</div>
+          <div class="card-title">${r.customer_name}</div>
+          <div class="card-subtitle">${r.item_type || ''} · ${fmtDate(r.received_date)}</div>
+        </div>
+        ${statusBadge(r.status)}
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="card-label">תיאור</span><span class="card-value">${r.description||'—'}</span></div>
+        <div class="card-row"><span class="card-label">צורף</span><span class="card-value">${r.goldsmith||'—'}</span></div>
+        <div class="card-row"><span class="card-label">עלות שלי</span><span class="card-value">${fmtMoney(r.my_cost)}</span></div>
+        <div class="card-row"><span class="card-label">מחיר ללקוח</span><span class="card-value" style="color:var(--gold)">${fmtMoney(r.client_price)}</span></div>
+        ${r.returned_date ? `<div class="card-row"><span class="card-label">הוחזר</span><span class="card-value">${fmtDate(r.returned_date)}</span></div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOrders() {
+  const grid = document.getElementById('ordersGrid');
+  let list = orders.filter(o => {
+    const q = ordersFilter.toLowerCase();
+    const match = !q || (o.customer_name||'').toLowerCase().includes(q)
+      || (o.item_type||'').toLowerCase().includes(q)
+      || (o.goldsmith||'').toLowerCase().includes(q);
+    const statusMatch = !ordersStatusFilter || o.status === ordersStatusFilter;
+    return match && statusMatch;
+  });
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">📋</div>
+      <h3>אין הזמנות</h3>
+      <p>לחץ "+ הזמנה חדשה" כדי להוסיף</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(o => {
+    const totalCost = (Number(o.main_diamond_cost)||0) + (Number(o.side_diamond_cost)||0) + (Number(o.work_cost)||0);
+    return `
+    <div class="card" onclick="editOrder(${o.id})">
+      <div class="card-header">
+        <div>
+          <div class="card-id">#${String(o.id).padStart(4,'0')}</div>
+          <div class="card-title">${o.customer_name}</div>
+          <div class="card-subtitle">${o.item_type||''} · זהב ${o.gold_karat}K ${o.gold_color||''}</div>
+        </div>
+        ${statusBadge(o.status)}
+      </div>
+      <div class="card-body">
+        ${o.main_diamond !== 'אין' ? `<div class="card-row"><span class="card-label">יהלום</span><span class="card-value">${o.main_diamond} ${o.diamond_weight||''} קרט</span></div>` : ''}
+        <div class="card-row"><span class="card-label">צורף</span><span class="card-value">${o.goldsmith||'—'}</span></div>
+        ${o.deadline ? `<div class="card-row"><span class="card-label">דד-ליין</span><span class="card-value" style="color:var(--orange)">${fmtDate(o.deadline)}</span></div>` : ''}
+        <div class="card-row"><span class="card-label">עלות שלי</span><span class="card-value">${totalCost ? fmtMoney(totalCost) : '—'}</span></div>
+        <div class="card-row"><span class="card-label">מחיר ללקוח</span><span class="card-value" style="color:var(--gold)">${fmtMoney(o.client_price)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Tab ───────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', (i===0 && tab==='repairs') || (i===1 && tab==='orders'));
+  });
+  document.getElementById('tab-repairs').style.display = tab==='repairs' ? '' : 'none';
+  document.getElementById('tab-orders').style.display  = tab==='orders'  ? '' : 'none';
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function filterCards(type, q) {
+  if (type==='repairs') { repairsFilter = q; renderRepairs(); }
+  else { ordersFilter = q; renderOrders(); }
+}
+function filterByStatus(type, s) {
+  if (type==='repairs') { repairsStatusFilter = s; renderRepairs(); }
+  else { ordersStatusFilter = s; renderOrders(); }
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal(type) {
+  if (type==='repair') {
+    document.getElementById('repairModalTitle').textContent = 'תיקון חדש';
+    document.getElementById('repairId').value = '';
+    document.getElementById('deleteRepairBtn').style.display = 'none';
+    ['r_customer_name','r_customer_phone','r_goldsmith','r_notes'].forEach(id => document.getElementById(id).value='');
+    ['r_sent_date','r_returned_date'].forEach(id => document.getElementById(id).value='');
+    ['r_my_cost','r_client_price'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('r_received_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('r_item_type').value = 'טבעת';
+    document.getElementById('r_status').value = 'התקבל';
+    document.getElementById('repairModal').classList.add('open');
+  } else {
+    document.getElementById('orderModalTitle').textContent = 'הזמנה חדשה';
+    document.getElementById('orderId').value = '';
+    document.getElementById('deleteOrderBtn').style.display = 'none';
+    ['o_customer_name','o_customer_phone','o_goldsmith','o_notes','o_ring_size','o_length','o_diamond_weight'].forEach(id => document.getElementById(id).value='');
+    ['o_deadline','o_model_approved_date','o_sent_to_goldsmith','o_delivered_date'].forEach(id => document.getElementById(id).value='');
+    ['o_main_diamond_cost','o_side_diamond_cost','o_work_cost','o_client_price'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('o_order_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('o_item_type').value = 'טבעת';
+    document.getElementById('o_gold_karat').value = '14';
+    document.getElementById('o_gold_color').value = 'צהוב';
+    document.getElementById('o_custom_design').value = 'לא';
+    document.getElementById('o_main_diamond').value = 'אין';
+    document.getElementById('o_side_diamonds').value = 'אין';
+    document.getElementById('o_stones_supplied').value = 'לא';
+    document.getElementById('o_status').value = 'ממתין לאישור מודל';
+    document.getElementById('orderModal').classList.add('open');
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── Edit ──────────────────────────────────────────────────────────────────────
+function editRepair(id) {
+  const r = repairs.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('repairModalTitle').textContent = 'עריכת תיקון #' + String(id).padStart(4,'0');
+  document.getElementById('repairId').value = id;
+  document.getElementById('deleteRepairBtn').style.display = '';
+  document.getElementById('r_customer_name').value = r.customer_name||'';
+  document.getElementById('r_customer_phone').value = r.customer_phone||'';
+  document.getElementById('r_received_date').value = r.received_date||'';
+  document.getElementById('r_item_type').value = r.item_type||'טבעת';
+  document.getElementById('r_description').value = r.description||'';
+  document.getElementById('r_goldsmith').value = r.goldsmith||'';
+  document.getElementById('r_sent_date').value = r.sent_date||'';
+  document.getElementById('r_my_cost').value = r.my_cost||'';
+  document.getElementById('r_client_price').value = r.client_price||'';
+  document.getElementById('r_status').value = r.status||'התקבל';
+  document.getElementById('r_returned_date').value = r.returned_date||'';
+  document.getElementById('r_notes').value = r.notes||'';
+  document.getElementById('repairModal').classList.add('open');
+}
+
+function editOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  document.getElementById('orderModalTitle').textContent = 'עריכת הזמנה #' + String(id).padStart(4,'0');
+  document.getElementById('orderId').value = id;
+  document.getElementById('deleteOrderBtn').style.display = '';
+  document.getElementById('o_customer_name').value = o.customer_name||'';
+  document.getElementById('o_customer_phone').value = o.customer_phone||'';
+  document.getElementById('o_order_date').value = o.order_date||'';
+  document.getElementById('o_deadline').value = o.deadline||'';
+  document.getElementById('o_item_type').value = o.item_type||'טבעת';
+  document.getElementById('o_gold_karat').value = o.gold_karat||'14';
+  document.getElementById('o_gold_color').value = o.gold_color||'צהוב';
+  document.getElementById('o_ring_size').value = o.ring_size||'';
+  document.getElementById('o_length').value = o.length||'';
+  document.getElementById('o_custom_design').value = o.custom_design||'לא';
+  document.getElementById('o_model_approved_date').value = o.model_approved_date||'';
+  document.getElementById('o_main_diamond').value = o.main_diamond||'אין';
+  document.getElementById('o_diamond_weight').value = o.diamond_weight||'';
+  document.getElementById('o_side_diamonds').value = o.side_diamonds||'אין';
+  document.getElementById('o_stones_supplied').value = o.stones_supplied||'לא';
+  document.getElementById('o_main_diamond_cost').value = o.main_diamond_cost||'';
+  document.getElementById('o_side_diamond_cost').value = o.side_diamond_cost||'';
+  document.getElementById('o_work_cost').value = o.work_cost||'';
+  document.getElementById('o_client_price').value = o.client_price||'';
+  document.getElementById('o_goldsmith').value = o.goldsmith||'';
+  document.getElementById('o_sent_to_goldsmith').value = o.sent_to_goldsmith||'';
+  document.getElementById('o_delivered_date').value = o.delivered_date||'';
+  document.getElementById('o_status').value = o.status||'ממתין לאישור מודל';
+  document.getElementById('o_notes').value = o.notes||'';
+  document.getElementById('orderModal').classList.add('open');
+}
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+function g(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() || null : null;
+}
+
+async function saveRepair() {
+  const name = g('r_customer_name');
+  if (!name) { showToast('נא למלא שם לקוח'); return; }
+  const payload = {
+    customer_name: name,
+    customer_phone: g('r_customer_phone'),
+    received_date: g('r_received_date'),
+    item_type: g('r_item_type'),
+    description: g('r_description'),
+    goldsmith: g('r_goldsmith'),
+    sent_date: g('r_sent_date'),
+    my_cost: g('r_my_cost') ? Number(g('r_my_cost')) : null,
+    client_price: g('r_client_price') ? Number(g('r_client_price')) : null,
+    status: g('r_status'),
+    returned_date: g('r_returned_date'),
+    notes: g('r_notes'),
+  };
+  const id = document.getElementById('repairId').value;
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('repairs').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('repairs').insert(payload));
+  }
+  if (error) { showToast('שגיאה בשמירה: ' + error.message); return; }
+  showToast(id ? 'תיקון עודכן ✓' : 'תיקון נוסף ✓');
+  closeModal('repairModal');
+  loadRepairs();
+}
+
+async function saveOrder() {
+  const name = g('o_customer_name');
+  if (!name) { showToast('נא למלא שם מזמין'); return; }
+  const payload = {
+    customer_name: name,
+    customer_phone: g('o_customer_phone'),
+    order_date: g('o_order_date'),
+    deadline: g('o_deadline'),
+    item_type: g('o_item_type'),
+    gold_karat: g('o_gold_karat'),
+    gold_color: g('o_gold_color'),
+    ring_size: g('o_ring_size'),
+    length: g('o_length'),
+    custom_design: g('o_custom_design'),
+    model_approved_date: g('o_model_approved_date'),
+    main_diamond: g('o_main_diamond'),
+    diamond_weight: g('o_diamond_weight') ? Number(g('o_diamond_weight')) : null,
+    side_diamonds: g('o_side_diamonds'),
+    stones_supplied: g('o_stones_supplied'),
+    main_diamond_cost: g('o_main_diamond_cost') ? Number(g('o_main_diamond_cost')) : null,
+    side_diamond_cost: g('o_side_diamond_cost') ? Number(g('o_side_diamond_cost')) : null,
+    work_cost: g('o_work_cost') ? Number(g('o_work_cost')) : null,
+    client_price: g('o_client_price') ? Number(g('o_client_price')) : null,
+    goldsmith: g('o_goldsmith'),
+    sent_to_goldsmith: g('o_sent_to_goldsmith'),
+    delivered_date: g('o_delivered_date'),
+    status: g('o_status'),
+    notes: g('o_notes'),
+  };
+  const id = document.getElementById('orderId').value;
+  let error;
+  if (id) {
+    ({ error } = await supabase.from('orders').update(payload).eq('id', id));
+  } else {
+    ({ error } = await supabase.from('orders').insert(payload));
+  }
+  if (error) { showToast('שגיאה בשמירה: ' + error.message); return; }
+  showToast(id ? 'הזמנה עודכנה ✓' : 'הזמנה נוספה ✓');
+  closeModal('orderModal');
+  loadOrders();
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteRecord(type) {
+  if (!confirm('למחוק את הרשומה? פעולה זו אינה הפיכה.')) return;
+  if (type === 'repair') {
+    const id = document.getElementById('repairId').value;
+    await supabase.from('repairs').delete().eq('id', id);
+    showToast('תיקון נמחק');
+    closeModal('repairModal');
+    loadRepairs();
+  } else {
+    const id = document.getElementById('orderId').value;
+    await supabase.from('orders').delete().eq('id', id);
+    showToast('הזמנה נמחקה');
+    closeModal('orderModal');
+    loadOrders();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) el.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
 
