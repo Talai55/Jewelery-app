@@ -772,13 +772,20 @@ CREATE POLICY "allow all" ON orders FOR ALL USING (true) WITH CHECK (true);
 
 // ── Auto-connect ──────────────────────────────────────────────────────────────
 window.onload = () => {
-  const url = localStorage.getItem('sb_url');
-  const key = localStorage.getItem('sb_key');
-  if (url && key) {
-    document.getElementById('setupUrl').value = url;
-    document.getElementById('setupKey').value = key;
-    initApp();
+  // Auto-connect with saved credentials
+  const SUPABASE_URL = 'https://hpothsyhuowrwdsqkffb.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhwb3Roc3lodW93cndkc3FrZmZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNTM3NzMsImV4cCI6MjA5NDYyOTc3M30.PVi8jINjiewlDjI32qBZytVKqqci0YT3FULGbLfqkZk';
+  
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    document.getElementById('setupScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    loadRepairs();
+    loadOrders();
+  } catch(e) {
+    showToast('שגיאה בחיבור');
   }
+
   // Set today's date as default
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('r_received_date').value = today;
